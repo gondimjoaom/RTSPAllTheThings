@@ -15,6 +15,7 @@
 #include "server.h"
 #include <cstdio>
 #include <cstdlib>
+#include <stdlib.h>
 #include <gst/app/gstappsink.h>
 #include <gst/app/gstappsrc.h>
 #include <iostream>
@@ -22,6 +23,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+static int count = 0;
 
 typedef struct _App App;
 struct _App {
@@ -44,13 +46,14 @@ static void need_data(GstElement *appsrc, guint unused, Context *ctx) {
     gst_app_src_push_sample(GST_APP_SRC(appsrc), sample);
     gst_sample_unref(sample);
     GST_BUFFER_PTS(buffer) = ctx->timestamp;
-    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale_int(1, GST_SECOND, 29);
+    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 29);
     ctx->timestamp += GST_BUFFER_DURATION(buffer);
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
   }
 }
 
 // Configure the media to push properly data
+
 static void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media,
                             App *app) {
   Context *ctx;
@@ -68,19 +71,42 @@ static void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media,
 }
 
 // Bus message handler
+bool r = true;
+gint64 videoBeginPoint = 0;
+
 gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
   GstElement *pipeline = GST_ELEMENT(data);
-
+  //std::cout << GST_MESSAGE_TYPE_NAME(msg) << "---- seqnum: " << GST_MESSAGE_SEQNUM(msg) << " ---- timestamp: " << GST_MESSAGE_TIMESTAMP(msg) << std::endl;
   switch (GST_MESSAGE_TYPE(msg)) {
-  case GST_MESSAGE_EOS: // Catch EOS to reset TS
-    if (!gst_element_seek(pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-                          GST_SEEK_TYPE_SET, 1000000000, GST_SEEK_TYPE_NONE,
-                          GST_CLOCK_TIME_NONE)) {
-      g_message("Seek failed!");
-    }
-    break;
-  default:
-    break;
+    
+    case GST_MESSAGE_EOS: // Catch EOS to reset TS 
+      std::cout << GST_MESSAGE_TYPE_NAME(msg)  << "----------------------------" << std::endl;
+      if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+                         GST_SEEK_TYPE_SET, videoBeginPoint,
+                         GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
+        g_message("Seek failed!");
+                            }
+      break;
+    case GST_MESSAGE_STREAM_START:
+      if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+                         GST_SEEK_TYPE_SET, videoBeginPoint,
+                         GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
+        g_message("Seek failed!");
+                            }
+      /*if  (r) {
+        g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/bunny.mp4", NULL);
+        //r = false;
+      }/*
+      else {
+        g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/videoAtak.mp4", NULL);
+        r = true;
+      }*/
+      break;
+    case GST_MESSAGE_BUFFERING:
+      std::cout << GST_MESSAGE_TYPE_NAME(msg) << std::endl;
+    default:
+      std::cout << GST_MESSAGE_TYPE_NAME(msg) << std::endl;
+      break;
   }
   return TRUE;
 }
@@ -91,29 +117,63 @@ inline bool file_exists(const std::string& name) {
   std::string corrected_name = name.substr(5);
   return (stat(corrected_name.c_str(), &buffer) == 0);
 }
-
 bool configure_file_input(t_server *serv) {
   // Setup and configuration
+  //goto play;
+  //play : {
   App *app = &s_app;
   GstElement *playbin = gst_element_factory_make("playbin", "play");
   app->videosink = gst_element_factory_make("appsink", "video_sink");
-  g_object_set(G_OBJECT(app->videosink), "emit-signals", FALSE, "sync", TRUE,
+  g_object_set(G_OBJECT(app->videosink), "emit-signals", TRUE, "sync", TRUE,
                NULL);
   g_object_set(G_OBJECT(playbin), "video-sink", app->videosink, NULL);
   GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
   gst_bus_add_watch(bus, bus_callback, playbin);
   std::string input_path = "file:///" + serv->config->input;
+
+  int startTag = input_path.find("starting at");
+  std::string videoBegin = input_path.substr(startTag + 12);
+
+  gint64 videoStartTime = 72000000000000 + 1020000000000 + 30000000000;
+
+  if (videoBegin.substr(0,2) != "00"){
+    std::cout << videoBegin.substr(0,2) << std::endl;
+    videoBeginPoint += 3600000000000 * stoull(videoBegin.substr(0,2), nullptr, 10);
+    std::cout << videoBeginPoint << std::endl;
+  }
+
+  if (videoBegin.substr(3,2) != "00"){
+    std::cout << videoBegin.substr(3,2) << std::endl;
+    videoBeginPoint += 60000000000 * stoull(videoBegin.substr(3,2), nullptr, 10);
+    std::cout << videoBeginPoint << std::endl;
+  }
+
+  if (videoBegin.substr(6,2) != "00"){
+    std::cout << videoBegin.substr(6,2) << std::endl;
+    videoBeginPoint += 1000000000 * stoull(videoBegin.substr(6,2), nullptr, 10);
+    std::cout << videoBeginPoint << std::endl;
+  }
+
+  videoBeginPoint -= videoStartTime;
+
+  //std::cout << videoBegin << std::endl;
+
+  //videoBeginPoint = stoull(videoBegin, nullptr, 10);
+
+  input_path = input_path.substr(0,startTag - 3);
   g_object_set(G_OBJECT(playbin), "uri", input_path.c_str(), NULL);
+
   gst_element_set_state(playbin, GST_STATE_PLAYING);
-
   // Media
+  
   g_signal_connect(serv->factory, "media-configure", (GCallback)media_configure,
-                   app);
-
+  	app);
   if (!file_exists(input_path)) {
     std::cerr << "Can't access " << input_path.c_str() << std::endl;
     return false;
   }
 
   return true;
+  //if (GST_MESSAGE_TYPE(msg)) goto play;
+  //}
 }

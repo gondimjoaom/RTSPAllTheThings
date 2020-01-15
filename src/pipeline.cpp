@@ -117,7 +117,7 @@ std::string create_videotestsrc_input(std::shared_ptr<t_config> &config) {
     launchCmd += "pattern=";
     launchCmd += config->input.substr(8);
   }
-
+  std::cout << "oi" << std::endl;
   launchCmd += time_overlay(config);
   launchCmd += encode(config);
   return launchCmd;

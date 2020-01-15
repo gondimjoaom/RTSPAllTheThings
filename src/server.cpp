@@ -20,7 +20,7 @@
 
 /* Init gst rtsp server */
 bool server_init(t_server *serv) {
-  serv->loop = g_main_loop_new(NULL, FALSE);
+  serv->loop = g_main_loop_new(NULL, TRUE);
 
   /* create a server instance */
   serv->server = gst_rtsp_server_new();
@@ -112,7 +112,6 @@ int server_launch(t_server *serv) {
           serv->config->port.c_str(), serv->config->route.c_str());
 
   g_main_loop_run(serv->loop);
-
 /* ERRORS */
 failed : {
   g_print("failed to attach the server\n");

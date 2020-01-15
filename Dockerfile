@@ -10,7 +10,6 @@ COPY . /rtspatt-src
 WORKDIR /rtspatt-build
 RUN cmake ../rtspatt-src && make
 
-
 FROM ubuntu:18.04
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
