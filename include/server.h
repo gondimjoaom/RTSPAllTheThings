@@ -29,6 +29,8 @@
 #define DEFAULT_TIME_ENABLED false
 #define DEFAULT_DIGEST_ENABLED false
 #define DEFAULT_GST_PIPELINE ""
+#define DEFAULT_BEGIN_TIME ""
+#define DEFAULT_JUMP_TO ""
 
 enum InputType { UNDEFINED_INPUT, FILE_INPUT, RTSP_INPUT, VIDEOTESTSRC_INPUT, DEVICE_INPUT };
 
@@ -51,6 +53,10 @@ typedef struct s_config {
   // Options
   bool time;
   bool digest;
+
+  //Options to set video starting time and make it jump to chosen time
+  std::string beginTime;
+  std::string jumpTo;
 
   // Custom gstreamer pipeline
   std::string pipeline;

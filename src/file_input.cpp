@@ -131,8 +131,8 @@ bool configure_file_input(t_server *serv) {
   gst_bus_add_watch(bus, bus_callback, playbin);
   std::string input_path = "file:///" + serv->config->input;
 
-  int startTag = input_path.find("starting at");
-  std::string videoBegin = input_path.substr(startTag + 12);
+  //int startTag = input_path.find("starting at");
+  std::string videoBegin = serv->config->jumpTo;
 
   gint64 videoStartTime = 72000000000000 + 1020000000000 + 30000000000;
 
@@ -159,8 +159,6 @@ bool configure_file_input(t_server *serv) {
   //std::cout << videoBegin << std::endl;
 
   //videoBeginPoint = stoull(videoBegin, nullptr, 10);
-
-  input_path = input_path.substr(0,startTag - 3);
   g_object_set(G_OBJECT(playbin), "uri", input_path.c_str(), NULL);
 
   gst_element_set_state(playbin, GST_STATE_PLAYING);

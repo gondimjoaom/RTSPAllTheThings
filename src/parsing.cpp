@@ -103,6 +103,18 @@ void parse_env(std::shared_ptr<t_config> &config) {
   if (const char *pipeline = std::getenv("GST_PIPELINE")) {
     config->pipeline = pipeline;
   }
+
+  // starting time
+  config->beginTime = DEFAULT_BEGIN_TIME;
+  if (const char *beginTime = std::getenv("BEGIN_TIME")) {
+    config->beginTime = beginTime;
+  }
+
+  // Jump to
+  config->jumpTo = DEFAULT_JUMP_TO;
+  if (const char *jumpTo = std::getenv("JUMP_TO")) {
+    config->jumpTo = jumpTo;
+  }
 }
 
 // Overwrite default parameters via cmd line
