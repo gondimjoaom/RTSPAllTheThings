@@ -87,7 +87,6 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
                             }
       break;
     case GST_MESSAGE_STREAM_START:
-      std::cout << videoBeginPoint << "-----------" << std::endl;
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                          GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
@@ -116,8 +115,7 @@ inline bool file_exists(const std::string& name) {
 }
 bool configure_file_input(t_server *serv) {
   // Setup and configuration
-  //goto play;
-  //play : {
+
   App *app = &s_app;
   GstElement *playbin = gst_element_factory_make("playbin", "play");
   app->videosink = gst_element_factory_make("appsink", "video_sink");
@@ -126,27 +124,49 @@ bool configure_file_input(t_server *serv) {
   g_object_set(G_OBJECT(playbin), "video-sink", app->videosink, NULL);
   GstBus *bus = gst_pipeline_get_bus(GST_PIPELINE(playbin));
   gst_bus_add_watch(bus, bus_callback, playbin);
+
+
+  //setting up date to get specific video file
+  //this variable will later be used to select the wanted file (or files?) according to user input
+  std::string dateString = serv->config->date;
+
   std::string input_path = "file:///" + serv->config->input;
 
-  //int startTag = input_path.find("starting at");
-  std::string jumpTo = serv->config->jumpTo;
+  //setting up video starting time
 
-  gint64 videoStartTime = serv->config->beginTime;//72000000000000 + 1020000000000 + 30000000000;
+  std::string beginTime = serv->config->beginTime;
+  gint64 videoStartTime = 0;
+
+  if (beginTime.substr(0,2) != "00"){
+    videoStartTime += 3600000000000 * stoull(beginTime.substr(0,2), nullptr, 10);
+  }
+
+  if (beginTime.substr(3,2) != "00"){
+    videoStartTime += 60000000000 * stoull(beginTime.substr(3,2), nullptr, 10);
+  }
+
+  if (beginTime.substr(6,2) != "00"){
+    videoStartTime += 1000000000 * stoull(beginTime.substr(6,2), nullptr, 10);
+  }
+
+  //setting up video jump to
+  std::string jumpTo = serv->config->jumpTo;
 
   if (jumpTo.substr(0,2) != "00"){
     videoBeginPoint += 3600000000000 * stoull(jumpTo.substr(0,2), nullptr, 10);
-    //std::cout << stoull(videoBegin.substr(0,2), nullptr, 10) << std::endl;
   }
 
   if (jumpTo.substr(3,2) != "00"){
     videoBeginPoint += 60000000000 * stoull(jumpTo.substr(3,2), nullptr, 10);
-    //std::cout << stoull(videoBegin.substr(3,2), nullptr, 10) << std::endl;
   }
 
   if (jumpTo.substr(6,2) != "00"){
     videoBeginPoint += 1000000000 * stoull(jumpTo.substr(6,2), nullptr, 10);
-    //std::cout << stoull(videoBegin.substr(6,2), nullptr, 10) << std::endl;
   }
+
+  //time, in nanoseconds, that will be added to the begining of the video
+  //it is defined by the point where we want it to jump to minus the time
+  //when the video actually started
 
   videoBeginPoint -= videoStartTime;
 
@@ -163,6 +183,4 @@ bool configure_file_input(t_server *serv) {
   }
 
   return true;
-  //if (GST_MESSAGE_TYPE(msg)) goto play;
-  //}
 }

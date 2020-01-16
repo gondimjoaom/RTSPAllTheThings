@@ -115,6 +115,11 @@ void parse_env(std::shared_ptr<t_config> &config) {
   if (const char *jumpTo = std::getenv("JUMP_TO")) {
     config->jumpTo = jumpTo;
   }
+
+  config->date = DEFAULT_DATE;
+  if (const char *date = std::getenv("DATE")) {
+    config->date = date;
+  }
 }
 
 // Overwrite default parameters via cmd line
