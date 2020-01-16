@@ -80,7 +80,6 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
   switch (GST_MESSAGE_TYPE(msg)) {
     
     case GST_MESSAGE_EOS: // Catch EOS to reset TS 
-      std::cout << GST_MESSAGE_TYPE_NAME(msg)  << "----------------------------" << std::endl;
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                          GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
@@ -88,6 +87,7 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
                             }
       break;
     case GST_MESSAGE_STREAM_START:
+      std::cout << videoBeginPoint << "-----------" << std::endl;
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                          GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
@@ -102,10 +102,7 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
         r = true;
       }*/
       break;
-    case GST_MESSAGE_BUFFERING:
-      std::cout << GST_MESSAGE_TYPE_NAME(msg) << std::endl;
     default:
-      std::cout << GST_MESSAGE_TYPE_NAME(msg) << std::endl;
       break;
   }
   return TRUE;
@@ -132,38 +129,32 @@ bool configure_file_input(t_server *serv) {
   std::string input_path = "file:///" + serv->config->input;
 
   //int startTag = input_path.find("starting at");
-  std::string videoBegin = serv->config->jumpTo;
+  std::string jumpTo = serv->config->jumpTo;
 
-  gint64 videoStartTime = 72000000000000 + 1020000000000 + 30000000000;
+  gint64 videoStartTime = serv->config->beginTime;//72000000000000 + 1020000000000 + 30000000000;
 
-  if (videoBegin.substr(0,2) != "00"){
-    std::cout << videoBegin.substr(0,2) << std::endl;
-    videoBeginPoint += 3600000000000 * stoull(videoBegin.substr(0,2), nullptr, 10);
-    std::cout << videoBeginPoint << std::endl;
+  if (jumpTo.substr(0,2) != "00"){
+    videoBeginPoint += 3600000000000 * stoull(jumpTo.substr(0,2), nullptr, 10);
+    //std::cout << stoull(videoBegin.substr(0,2), nullptr, 10) << std::endl;
   }
 
-  if (videoBegin.substr(3,2) != "00"){
-    std::cout << videoBegin.substr(3,2) << std::endl;
-    videoBeginPoint += 60000000000 * stoull(videoBegin.substr(3,2), nullptr, 10);
-    std::cout << videoBeginPoint << std::endl;
+  if (jumpTo.substr(3,2) != "00"){
+    videoBeginPoint += 60000000000 * stoull(jumpTo.substr(3,2), nullptr, 10);
+    //std::cout << stoull(videoBegin.substr(3,2), nullptr, 10) << std::endl;
   }
 
-  if (videoBegin.substr(6,2) != "00"){
-    std::cout << videoBegin.substr(6,2) << std::endl;
-    videoBeginPoint += 1000000000 * stoull(videoBegin.substr(6,2), nullptr, 10);
-    std::cout << videoBeginPoint << std::endl;
+  if (jumpTo.substr(6,2) != "00"){
+    videoBeginPoint += 1000000000 * stoull(jumpTo.substr(6,2), nullptr, 10);
+    //std::cout << stoull(videoBegin.substr(6,2), nullptr, 10) << std::endl;
   }
 
   videoBeginPoint -= videoStartTime;
 
-  //std::cout << videoBegin << std::endl;
-
-  //videoBeginPoint = stoull(videoBegin, nullptr, 10);
   g_object_set(G_OBJECT(playbin), "uri", input_path.c_str(), NULL);
 
   gst_element_set_state(playbin, GST_STATE_PLAYING);
   // Media
-  
+
   g_signal_connect(serv->factory, "media-configure", (GCallback)media_configure,
   	app);
   if (!file_exists(input_path)) {

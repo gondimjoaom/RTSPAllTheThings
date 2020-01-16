@@ -1,0 +1,18 @@
+version: '3.2'
+
+services:
+    rtsp-server:
+        image: rtsp-server
+        hostname: rtsp-server
+        container_name: rtsp-server
+        ports: 
+            - 8554:8554
+        environment: 
+            - INPUT=/tmp/Atak/videos/videoBahia.mp4
+            - DATE=12/02/2019
+            - JUMP_TO=00:03:51
+        build:
+            context: .
+        volumes:
+            - c:\:/tmp            
+
