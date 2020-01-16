@@ -10,7 +10,8 @@ services:
         environment: 
             - INPUT=/tmp/Atak/videos/videoBahia.mp4
             - DATE=12/02/2019
-            - JUMP_TO=00:03:51
+            - JUMP_TO=00:19:55
+            - BEGIN_TIME=00:00:00
         build:
             context: .
         volumes:

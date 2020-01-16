@@ -80,8 +80,9 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
   switch (GST_MESSAGE_TYPE(msg)) {
     
     case GST_MESSAGE_EOS: // Catch EOS to reset TS 
+      g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/bunny.mp4", NULL);
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-                         GST_SEEK_TYPE_SET, videoBeginPoint,
+                         GST_SEEK_TYPE_SET, 0,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
         g_message("Seek failed!");
                             }
