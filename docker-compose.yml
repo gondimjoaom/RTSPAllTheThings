@@ -8,12 +8,12 @@ services:
         ports: 
             - 8554:8554
         environment: 
-            - INPUT=/tmp/Atak/videos/videoBahia.mp4
+            - INPUT=/tmp/data/videos/ch0002_00000001475000000.mp4
             - DATE=12/02/2019
             - JUMP_TO=00:19:55
             - BEGIN_TIME=00:00:00
         build:
             context: .
         volumes:
-            - c:\:/tmp            
+            - /:/tmp            
 

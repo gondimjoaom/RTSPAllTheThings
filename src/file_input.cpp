@@ -72,7 +72,7 @@ static void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media,
 
 // Bus message handler
 bool r = true;
-gint64 videoBeginPoint = 0;
+unsigned long long int videoBeginPoint = 0;
 
 gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
   GstElement *pipeline = GST_ELEMENT(data);
@@ -82,12 +82,13 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
     case GST_MESSAGE_EOS: // Catch EOS to reset TS 
       g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/bunny.mp4", NULL);
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-                         GST_SEEK_TYPE_SET, 0,
+                         GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
         g_message("Seek failed!");
                             }
       break;
     case GST_MESSAGE_STREAM_START:
+      std::cout << "to voando alto" << std::endl;
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                          GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
@@ -136,7 +137,7 @@ bool configure_file_input(t_server *serv) {
   //setting up video starting time
 
   std::string beginTime = serv->config->beginTime;
-  gint64 videoStartTime = 0;
+  unsigned long long int videoStartTime = 0;
 
   if (beginTime.substr(0,2) != "00"){
     videoStartTime += 3600000000000 * stoull(beginTime.substr(0,2), nullptr, 10);
@@ -169,7 +170,8 @@ bool configure_file_input(t_server *serv) {
   //it is defined by the point where we want it to jump to minus the time
   //when the video actually started
 
-  videoBeginPoint -= videoStartTime;
+  videoBeginPoint -= videoStartTime; //for some reason the stream always start with 1 second added to the
+                                                  //begining point set
 
   g_object_set(G_OBJECT(playbin), "uri", input_path.c_str(), NULL);
 
