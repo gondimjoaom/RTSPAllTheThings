@@ -46,12 +46,11 @@ static void need_data(GstElement *appsrc, guint unused, Context *ctx) {
     gst_app_src_push_sample(GST_APP_SRC(appsrc), sample);
     gst_sample_unref(sample);
     GST_BUFFER_PTS(buffer) = ctx->timestamp;
-    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale(1, GST_SECOND, 29);
+    GST_BUFFER_DURATION(buffer) = gst_util_uint64_scale_int(1, GST_SECOND, 29);
     ctx->timestamp += GST_BUFFER_DURATION(buffer);
     g_signal_emit_by_name(appsrc, "push-buffer", buffer, &ret);
   }
 }
-
 // Configure the media to push properly data
 
 static void media_configure(GstRTSPMediaFactory *factory, GstRTSPMedia *media,
@@ -80,28 +79,18 @@ gboolean bus_callback(GstBus *bus, GstMessage *msg, gpointer data) {
   switch (GST_MESSAGE_TYPE(msg)) {
     
     case GST_MESSAGE_EOS: // Catch EOS to reset TS 
-      g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/bunny.mp4", NULL);
-      if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
-                         GST_SEEK_TYPE_SET, videoBeginPoint,
-                         GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
-        g_message("Seek failed!");
-                            }
+      //if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
+      //                   GST_SEEK_TYPE_SET, 0000000000,
+      //                   GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
+      //  g_message("Seek failed!");
+      //                      }
       break;
     case GST_MESSAGE_STREAM_START:
-      std::cout << "to voando alto" << std::endl;
       if (!gst_element_seek (pipeline, 1.0, GST_FORMAT_TIME, GST_SEEK_FLAG_FLUSH,
                          GST_SEEK_TYPE_SET, videoBeginPoint,
                          GST_SEEK_TYPE_NONE, GST_CLOCK_TIME_NONE)) {
         g_message("Seek failed!");
                             }
-      /*if  (r) {
-        g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/bunny.mp4", NULL);
-        //r = false;
-      }/*
-      else {
-        g_object_set(G_OBJECT(pipeline), "uri", "file:////tmp/data/videos/videoAtak.mp4", NULL);
-        r = true;
-      }*/
       break;
     default:
       break;
@@ -172,7 +161,7 @@ bool configure_file_input(t_server *serv) {
 
   videoBeginPoint -= videoStartTime; //for some reason the stream always start with 1 second added to the
                                                   //begining point set
-
+  
   g_object_set(G_OBJECT(playbin), "uri", input_path.c_str(), NULL);
 
   gst_element_set_state(playbin, GST_STATE_PLAYING);

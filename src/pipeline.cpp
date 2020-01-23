@@ -83,7 +83,9 @@ std::string encode(std::shared_ptr<t_config> &config) {
   }
 
   if (needs_encoding(config)) {
-    launchCmd += " ! capsfilter ! queue ! x264enc speed-preset=superfast";
+    //launchCmd += " ! capsfilter ! queue ! x264enc speed-preset=superfast";
+    launchCmd += " ! videoconvert";
+
   }
 
   return launchCmd;
@@ -128,8 +130,6 @@ std::string create_file_input(std::shared_ptr<t_config> &config) {
   std::string launchCmd = "";
 
   launchCmd += "appsrc name=mysrc";
-  launchCmd += " ! decodebin";
-
   launchCmd += time_overlay(config);
   launchCmd += encode(config);
   return launchCmd;
@@ -168,5 +168,6 @@ std::string create_pipeline(std::shared_ptr<t_config> &config) {
   }
 
   launchCmd += " )";
+  //launchCmd = "(appsrc name=mysrc ! qtdemux name=demux demux. ! queue ! faad ! audioconvert ! audioresample ! autoaudiosink demux. ! queue ! avdec_h264 ! videoconvert ! autovideosink)";
   return launchCmd;
 }
